@@ -434,8 +434,9 @@ void outputDOT(DAG dag) {
   for (i=0; i<dag->nb_levels; i++) {
     for (j=0; j<dag->nb_tasks_per_level[i]; j++) {
       /* do the COMPUTATION */
-      fprintf(OUTPUT,"  %d [size=\"%.0f\", alpha=\"%.2f\"]\n",
+      fprintf(OUTPUT,"  %d/%d [size=\"%.0f\", alpha=\"%.2f\"]\n",
           dag->levels[i][j]->tag,
+          dag->levels[i][j]->data_size,
           dag->levels[i][j]->cost,
           dag->levels[i][j]->alpha);
 //      for (k=0; k<dag->levels[i][j]->nb_children-1; k++) {
@@ -454,9 +455,11 @@ void outputDOT(DAG dag) {
 //      }
       /* do the TRANSFER */
       for (k=0; k<dag->levels[i][j]->nb_children; k++) {
-        fprintf(OUTPUT,"  %d -> %d [size =\"%.f\"]\n",
+        fprintf(OUTPUT,"  %d/%d -> %d/%d [size =\"%.f\"]\n",
             dag->levels[i][j]->tag,
+            dag->levels[i][j]->data_size,
             dag->levels[i][j]->children[k]->tag,
+            dag->levels[i][j]->children[k]->data_size,
             dag->levels[i][j]->comm_costs[k]);
       }
     }
