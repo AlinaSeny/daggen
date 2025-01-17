@@ -240,7 +240,7 @@ int parseOptions(int argc, char *const *argv) {
       break;
     case '?':
       /* getopt_long already printed an error message. */
-      break;
+      return -1;
 
     default:
       abort();
