@@ -46,6 +46,7 @@ int parseOptions(int argc, char *const *argv) {
   int regular_flag = 0;
   int jump_flag = 0;
   int dot_flag = 0;
+  int dag_flag = 0;
   int conn_flag = 0;
 
   global.output_file=stdout;
@@ -60,6 +61,7 @@ int parseOptions(int argc, char *const *argv) {
   global.regular=0.9;
   global.n=100;
   global.dot_output=0;
+  global.dag_output=0;
   global.conn=0;
 
   while (ret_val == 0) {
@@ -75,6 +77,7 @@ int parseOptions(int argc, char *const *argv) {
         { "regular", 1, 0, 0 }, /* double   */
         { "jump", 1, 0, 0 }, /* int   */
         { "dot", 0, 0, 0},
+        { "dag", 0, 0, 0},
         { "conn", 0, 0, 0},
         { 0, 0, 0, 0 } };
 
@@ -210,6 +213,11 @@ int parseOptions(int argc, char *const *argv) {
         dot_flag = 1;
 
         global.dot_output=1;
+      } else if (!strcmp(optname, "dag")) {
+
+        dag_flag = 1;
+
+        global.dag_output=1;
       } else if (!strcmp(optname, "conn")) {
 
         conn_flag = 1;
@@ -329,6 +337,7 @@ void printUsage(void)
       "\t --jump <number of levels spanned by communications>\n"
       "\t    jump=1: perfectly synchronized levels\n"
       "\t --dot: output generated DAG in the DOT format\n"
+      "\t --dag: output generated DAG in the DAG_DEFAULT format\n"
       "\t --conn: generate only connected DAG. If no connected graph is generated after 10 attempts, the program stops.\n"
       "\n");
   return;
@@ -443,8 +452,9 @@ void outputDOT(DAG dag) {
   for (i=0; i<dag->nb_levels; i++) {
     for (j=0; j<dag->nb_tasks_per_level[i]; j++) {
       /* do the COMPUTATION */
-      fprintf(OUTPUT,"  %d [size=\"%.0f\", alpha=\"%.2f\"]\n",
+      fprintf(OUTPUT,"  %d/%d [size=\"%.0f\", alpha=\"%.2f\"]\n",
           dag->levels[i][j]->tag,
+          dag->levels[i][j]->data_size,
           dag->levels[i][j]->cost,
           dag->levels[i][j]->alpha);
 //      for (k=0; k<dag->levels[i][j]->nb_children-1; k++) {
@@ -463,9 +473,11 @@ void outputDOT(DAG dag) {
 //      }
       /* do the TRANSFER */
       for (k=0; k<dag->levels[i][j]->nb_children; k++) {
-        fprintf(OUTPUT,"  %d -> %d [size =\"%.f\"]\n",
+        fprintf(OUTPUT,"  %d/%d -> %d/%d [size =\"%.f\"]\n",
             dag->levels[i][j]->tag,
+            dag->levels[i][j]->data_size,
             dag->levels[i][j]->children[k]->tag,
+            dag->levels[i][j]->children[k]->data_size,
             dag->levels[i][j]->comm_costs[k]);
       }
     }
@@ -482,6 +494,42 @@ void outputDOT(DAG dag) {
 
   fprintf(OUTPUT,"}\n");
 }
+
+
+void outputDAG_DEFAULT(DAG dag) {
+  int i, j, k;
+  /* starting at 1 for the root node */
+  int node_count=1;
+
+  /* count and tag the nodes */
+  for (i=0; i<dag->nb_levels; i++) {
+    for (j=0; j<dag->nb_tasks_per_level[i]; j++) {
+      dag->levels[i][j]->tag = node_count++;
+    }
+  }
+  /* accounting for the END node */
+  fprintf(OUTPUT,"node    size    children\n");
+
+  /* Creating the regular nodes until next to last level */
+  for (i=0; i<dag->nb_levels; i++) {
+    for (j=0; j<dag->nb_tasks_per_level[i]; j++) {
+      /* do the node and size */
+      fprintf(OUTPUT,"  %d    %d    ",
+          dag->levels[i][j]->tag,
+          dag->levels[i][j]->data_size);
+      /* do the children */
+      for (k=0; k<dag->levels[i][j]->nb_children; k++) {
+        fprintf(OUTPUT,"%d ",
+            dag->levels[i][j]->children[k]->tag);
+      }
+      fprintf(OUTPUT,"\n");
+    }
+  }
+
+  fprintf(OUTPUT,"\n");
+}
+
+
 
 /***********************/
 /** Random generators **/

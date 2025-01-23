@@ -41,6 +41,7 @@ typedef struct {
   double minalpha, maxalpha; /* Amdahl's law parameter */
   int jump;
   int dot_output;
+  int dag_output;
   int conn;
   FILE *output_file;
 } Global;
@@ -75,6 +76,7 @@ void printUsage(void);
 
 void outputDAG(DAG dag);
 void outputDOT(DAG dag);
+void outputDAG_DEFAULT(DAG dag);
 
 int getIntRandomNumberAround(int x, double perc);
 

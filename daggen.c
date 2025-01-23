@@ -78,6 +78,8 @@ int main(int argc, char **argv)
   if (dag) {
     if (global.dot_output)
       outputDOT(dag);
+    else if (global.dag_output)
+      outputDAG_DEFAULT(dag);
     else
       outputDAG(dag);
   }
