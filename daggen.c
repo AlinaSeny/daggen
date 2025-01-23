@@ -25,7 +25,7 @@ static void generateTasks(DAG dag);
 static void generateDependencies(DAG dag);
 static void generateTransfers(DAG dag);
 static void freeDAG(DAG dag);
-
+static int checkConnectivity(DAG dag);
 /************/
 /** main() **/
 /************/
@@ -52,8 +52,27 @@ int main(int argc, char **argv)
   }
   fprintf(OUTPUT,"\n");
 
-  /* generating the dag */
-  dag=generateDAG();
+  if (global.conn) {
+    int connected = 0, nbtry = 0;
+    while (1) {
+      /* generating the dag */
+      dag=generateDAG();
+      connected = checkConnectivity(dag);
+      if (connected) {
+        printf("//Dag connected after %d attemts.\n", nbtry);
+        break;
+      }
+      freeDAG(dag);
+      nbtry++;
+      if (nbtry == 10) {
+        printf("//Dag disconnected after 10 attemts. You can try again @_@. Good luck!\n");
+        exit(0);
+      }
+    }
+  } else {
+    /* generating the dag */
+    dag=generateDAG();
+  }
 
   /* generate output */
   if (dag) {
@@ -198,6 +217,7 @@ static void generateTasks(DAG dag) {
   int *nb_tasks=NULL;
   int nb_tasks_per_level;
   int total_nb_tasks=0;
+  int checked = 0;
   int tmp;
 
   /* compute the perfect number of tasks per levels */
@@ -233,6 +253,8 @@ static void generateTasks(DAG dag) {
       /** (3) add a factor for N_2 and N_LOG_N **/
       /** (4) multiply (1) by (2) and by (3)   **/
       /** Cost are in flops                    **/
+
+      dag->levels[i][j]->checked = checked;
 
       dag->levels[i][j]->data_size = ((int) getRandomNumberBetween(
           global.mindata, global.maxdata) / 1024) * 1024;
@@ -285,4 +307,42 @@ void freeDAG (DAG dag){
   free(dag->levels);
   free(dag->nb_tasks_per_level);
   free(dag);
+}
+
+int DFS(Task task, int checkid){
+  int count2 = 0;
+  for (int k=0; k < task->nb_children; k++) {
+    if (task->children[k]->checked == 2) {
+      count2++;
+      continue;
+    }
+    if (task->children[k]->checked == checkid+1) {
+      continue;
+    }
+    task->children[k]->checked = checkid;
+    count2 += DFS(task->children[k], checkid);
+  }
+  task->checked = checkid+1;
+  return count2;
+}
+
+int checkConnectivity (DAG dag){
+  int i=0, j=0, checkid=1;
+  dag->levels[i][j]->checked = 1;
+  DFS(dag->levels[i][j], checkid);
+  checkid = 3;
+  for (i=0; i<dag->nb_levels; i++) {
+    for (j=0; j<dag->nb_tasks_per_level[i]; j++) {
+      if (!dag->levels[i][j]->checked) {
+        dag->levels[i][j]->checked = 1;
+        if (DFS(dag->levels[i][j], checkid) == 0) {
+          printf("//graph disconnected \n");
+          return 0;
+        }
+      }
+    }
+  }
+  
+  printf("//connected\n");
+  return 1;
 }
