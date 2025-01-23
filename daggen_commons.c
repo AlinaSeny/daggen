@@ -47,6 +47,7 @@ int parseOptions(int argc, char *const *argv) {
   int jump_flag = 0;
   int dot_flag = 0;
   int dag_flag = 0;
+  int conn_flag = 0;
 
   global.output_file=stdout;
   global.jump=1;
@@ -61,6 +62,7 @@ int parseOptions(int argc, char *const *argv) {
   global.n=100;
   global.dot_output=0;
   global.dag_output=0;
+  global.conn=0;
 
   while (ret_val == 0) {
 
@@ -76,6 +78,7 @@ int parseOptions(int argc, char *const *argv) {
         { "jump", 1, 0, 0 }, /* int   */
         { "dot", 0, 0, 0},
         { "dag", 0, 0, 0},
+        { "conn", 0, 0, 0},
         { 0, 0, 0, 0 } };
 
     /* getopt_long stores the option index here. */
@@ -215,6 +218,11 @@ int parseOptions(int argc, char *const *argv) {
         dag_flag = 1;
 
         global.dag_output=1;
+      } else if (!strcmp(optname, "conn")) {
+
+        conn_flag = 1;
+
+        global.conn=1;
       } else {
         fprintf(stderr, "unknown switch: %s\n", optname);
       }
@@ -248,7 +256,7 @@ int parseOptions(int argc, char *const *argv) {
       break;
     case '?':
       /* getopt_long already printed an error message. */
-      break;
+      return -1;
 
     default:
       abort();
@@ -330,6 +338,7 @@ void printUsage(void)
       "\t    jump=1: perfectly synchronized levels\n"
       "\t --dot: output generated DAG in the DOT format\n"
       "\t --dag: output generated DAG in the DAG_DEFAULT format\n"
+      "\t --conn: generate only connected DAG. If no connected graph is generated after 10 attempts, the program stops.\n"
       "\n");
   return;
 }

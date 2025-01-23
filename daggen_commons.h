@@ -42,6 +42,7 @@ typedef struct {
   int jump;
   int dot_output;
   int dag_output;
+  int conn;
   FILE *output_file;
 } Global;
 
@@ -59,6 +60,7 @@ struct _Task {
   double *comm_costs;
   int *transfer_tags;
   complexity_t complexity;
+  int checked;
 };
 
 struct _DAG {
