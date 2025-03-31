@@ -61,6 +61,9 @@ DAGGEN generates task graphs based on the following popular parameters:
   --jump      Maximum number of levels spanned by inter-task communications. 
               This allows to generate DAGs with execution paths of different 
               lengths
+  --dot: output generated DAG in the DOT format
+  --dag: output generated DAG in the DAG_DEFAULT format
+  --conn: generate only connected DAG. If no connected graph is generated after 10 attempts, the program stops.
 
 DAGGEN creates random DAGs through the following process:
   1) Generate the tasks
